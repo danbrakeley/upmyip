@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -12,6 +13,7 @@ type Spinner struct {
 	frames []rune
 
 	done chan struct{}
+	wg   *sync.WaitGroup
 }
 
 func NewSpinner() *Spinner {
@@ -27,6 +29,8 @@ func (s *Spinner) Start() {
 		return
 	}
 	s.done = make(chan struct{})
+	s.wg = &sync.WaitGroup{}
+	s.wg.Add(1)
 	go s.Run()
 }
 
@@ -35,19 +39,22 @@ func (s *Spinner) Stop() {
 		return
 	}
 	close(s.done)
+	s.wg.Wait()
 	s.done = nil
+	s.wg = nil
 }
 
 func (s *Spinner) Run() {
+	defer s.wg.Done()
 	fmt.Print(HideCursor)
-	defer fmt.Print(" " + Left(1) + ShowCursor)
+	defer fmt.Print(EraseEOL + ShowCursor + SGR(Reset))
 
 	for {
 		select {
 		case <-s.done:
 			return
 		default:
-			fmt.Printf("%s%c%s", SGR(FgBlue), s.frames[s.frame], Left(1)+SGR(FgReset))
+			fmt.Printf("%s%c%s", SGR(FgGreen), s.frames[s.frame], Left(1)+SGR(FgReset))
 			s.frame = (s.frame + 1) % len(s.frames)
 			<-time.After(time.Duration(s.mspf) * time.Millisecond)
 		}
@@ -58,6 +65,8 @@ const (
 	EscRune = '\u001b'
 	Esc     = string(EscRune)
 	CSI     = Esc + "[" // Control Sequence Introducer
+
+	EraseEOL = CSI + "K" // erase to end of current line
 
 	// DECTCEM commands
 
