@@ -2,36 +2,51 @@
 
 ## Overview
 
-If you've got a service you want people to access remotely, but you don't want to expose to the entire internet (e.g. Perforce), then a quick solution is to get everyone's public IP address and add them to the security group protecting that service.
+This is a solution to maintaining an IP allow list on a service using Security Groups in AWS. It gives a cli to end users that they can run to first look up their public-facing IP address, and to then send it along to a lambda that will revoke any old IP address for that user, and authorize the new one.
 
-Of course, few people's IP is truly static, and ideally a user would be able to update their IP using some secure credentials (like an AWS account).
+The lambda and CLI are both written in Go, and deployment and adding users happens via the included CloudFormation scripts (see aws/README.md). The CLI reads its credentials from its own config file (and not from `~/.aws`, this was done to keep it simple to roll out to users).
 
-This project aims to provide some structure and a CLI to allow your users to update their current IP as they see fit.
+## WARNING
 
-WARNING: If you care about security, setup a VPN. Remember that a single IP can hide an unlimited number of actual devices. Did one of your users just open up your precious service to an entire Starbucks? An entire hotel? An entire university? USE WITH CAUTION!
+If you want to keep something secure, then put it behind a VPN. This solution is just meant to reduce the attack surface, but doesn't offer any real protection.
 
-## Pieces
+I TAKE NO RESPONSIBILITY FOR THIS WORKING OR NOT WORKING. ASSUME IT DOESN'T WORK, AND THEN PROVE TO YOURSELF THAT IT DOES BEFORE USING.
 
-- AWS
-  - Each user gets a lambda function that is hard coded to that user.
-  - Each user gets an IAM User that only has permission to invoke their lambda.
-  - Each lambda gets permission to alter a single security group.
-- User
-  - Each user gets the `upmyip` executable (which is the same for all users).
-  - Each user gets a `upmyip.toml` that is specific to them, and includes their lambda's name, and the access key and secret for their user.
+If you find something wrong/broken, please let me know and/or open a PR to help fix it!
 
-## Getting a new user setup
+## Dev Setup
 
-- For each new user, deploy the `per-user` CF template in the `aws` folder (see the `README` in that folder for more specifics).
+- Install a recent version of [Go](https://go.dev/dl/)
+- Install [Mage](https://magefile.org/)
+- run `mage` to see the build targets
 
-- Build the upmyip.toml for this user
-  ```text
-  lambda = LAMBDA_FUNCTION_NAME
-  access_key = ACCESS_KEY
-  secret_key = SECRET
+Note that building and packaging happen in the `local` folder (which is ignored by git).
+
+### Building the Lambda
+
+- run `mage buildlambda`
+  - output is `local/lambda.zip`
+
+Note that deploying code changes to all running lambdas can be automated via some bash script in [aws/README.md](aws/README.md).
+
+### Building the CLI
+
+- run `mage build`
+  - output is `local/upmyip[.exe]`
+- it will require a `upmyip.toml` config file in the current folder, in the form:
+  ```toml
+  lambda = "LAMBDA_FUNCTION_NAME"
+  access_key = "ACCESS_KEY"
+  secret_key = "SECRET"
   ```
 
-- Zip up the `upmyip.exe` and the new `upmyip.toml` and send them to the user
-  - You can always send them an updated upmyip.exe that they can use with their existing toml file.
+## AWS Setup
 
-- Note that you don't have to add a security group ingress rule for them ahead of time, it will get added automatically.
+See [aws/README.md](aws/README.md).
+
+### Adding users
+
+- For each new user, deploy the `per-user.yaml` CF template in the `aws` folder (see the `README` in that folder for more specifics).
+- Create a `upmyip.toml` for this user by hand (see `Building the CLI` above for an example).
+- Securely send the user the config file.
+- Send the user the latest cli executable.
