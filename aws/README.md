@@ -39,7 +39,7 @@
 ## Generate access key for the newly created user
 
 ```text
-aws iam create-access-key --user-name USERNAME
+aws iam create-access-key --user-name INVOCATION_USER
 ```
 
 ## Invoke lambda
