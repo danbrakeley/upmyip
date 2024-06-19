@@ -19,12 +19,17 @@ func main() {
 
 	ctx := context.Background()
 
-	fmt.Printf("Finding public IP address...\n")
+	s := NewSpinner()
+	fmt.Print("Finding public IP address... ")
+	s.Start()
 	info, err := RequestPublicInfo(ctx)
 	if err != nil {
-		fmt.Printf("Error requesting public IP: %v\n", err)
+		s.Stop()
+		fmt.Printf("%sError: %s%v%s\n", SGR(FgRed), SGR(FgYellow), err, SGR(FgReset))
 		return
 	}
+	s.Stop()
+	fmt.Printf("%s%s %s(%s)%s\n", SGR(FgWhite), info.IP, SGR(FgCyan), info.ISP, SGR(FgReset))
 
 	credProvider := aws.NewCredentialsCache(
 		credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretKey, ""),
@@ -35,18 +40,22 @@ func main() {
 		config.WithRegion("us-east-1"),
 	)
 	if err != nil {
-		fmt.Printf("Error loading AWS config: %v\n", err)
+		fmt.Printf("%sError loading AWS config: %s%v%s\n", SGR(FgRed), SGR(FgYellow), err, SGR(FgReset))
 		return
 	}
 
-	fmt.Printf("Invoking lambda %s...\n", cfg.LambdaName)
+	fmt.Print("Updating IP... ")
+	s.Start()
 	err = InvokeLambda(ctx, awscfg, cfg.LambdaName, info.IP)
 	if err != nil {
-		fmt.Printf("Error invoking lambda: %v\n", err)
+		s.Stop()
+		fmt.Printf("%sError invoking lambda: %s%v%s\n", SGR(FgRed), SGR(FgYellow), err, SGR(FgReset))
 		return
 	}
+	s.Stop()
+	fmt.Printf("%sDone%s\n", SGR(FgWhite), SGR(FgReset))
 
-	fmt.Printf("Done\n")
+	fmt.Printf("Success!\n\n")
 }
 
 func InvokeLambda(ctx context.Context, awscfg aws.Config, lambdaName, ip string) error {
