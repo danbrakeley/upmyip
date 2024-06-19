@@ -8,7 +8,8 @@ import (
 
 type Config struct {
 	LambdaName string `toml:"lambda"`
-	User       string `toml:"user"`
+	AccessKey  string `toml:"access_key"`
+	SecretKey  string `toml:"secret_key"`
 }
 
 func LoadConfig(path string) (Config, error) {

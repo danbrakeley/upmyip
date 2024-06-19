@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to allow a user to set an IP address to allow access to a service.
+
+Parameters:
+  UserName:
+    Type: String
+    Description: The name of the user who will be allowed access by this security group.
+  BucketForLambdaZips:
+    Type: String
+    Description: The name of the S3 bucket where the Lambda zip files are stored.
+  SecurityGroupId:
+    Type: String
+    Description: The ID of the security group that this Lambda will edit.
+
+Resources:
+  RoleForLambdaExecution:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub "${UserName}LambdaExecutionPolicy"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ec2:RevokeSecurityGroupIngress"
+                  - "ec2:AuthorizeSecurityGroupIngress"
+                  - "ec2:DeleteTags"
+                  - "ec2:CreateTags"
+                Resource: !Sub "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:security-group/${SecurityGroupId}"
+              - Effect: Allow
+                Action:
+                  - "ec2:DescribeSecurityGroupRules"
+                  - "ec2:DescribeTags"
+                Resource: "*"
+              ## AWSLambdaBasicExecutionRole
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "*"
+
+  Lambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Architectures: [ "arm64" ]
+      Code:
+        S3Bucket: !Ref BucketForLambdaZips
+        S3Key: lambda.zip
+      Environment:
+        Variables:
+          UPMYIP_SECURITY_GROUP: !Ref SecurityGroupId
+          UPMYIP_USERNAME: !Ref UserName
+      Handler: bootstrap
+      PackageType: Zip
+      Role: !GetAtt RoleForLambdaExecution.Arn
+      Runtime: provided.al2023
+      Tags:
+        - Key: UserName
+          Value: !Ref UserName
+        - Key: UpdatableBy
+          Value: upmyip
+
+  UserForLambdaInvocation:
+    Type: AWS::IAM::User
+    Properties:
+      Policies:
+        - PolicyName: !Sub "${UserName}LambdaInvocationPolicy"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt Lambda.Arn
+      Tags:
+        - Key: UserName
+          Value: !Ref UserName
+
+Outputs:
+  LambdaFunction:
+    Description: The ARN of the Lambda function
+    Value: !GetAtt Lambda.Arn
+  ExecutionRole:
+    Description: The ARN of the role that allows the Lambda to edit the security group
+    Value: !GetAtt RoleForLambdaExecution.Arn
+  InvocationUser:
+    Description: The user that can invoke the Lambda
+    Value: !Ref UserForLambdaInvocation

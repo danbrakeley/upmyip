@@ -1,1 +1,5 @@
 /local/
+*.ignore.sh
+*.ignore.json
+*.ignore.yaml
+*.ignore.toml
