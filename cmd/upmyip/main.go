@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -11,25 +12,32 @@ import (
 )
 
 func main() {
+	_, noColor := os.LookupEnv("NO_COLOR")
+	prn := Printer{
+		NoColor: noColor,
+	}
+
+	prn.Header("UpMyIP v0.1.2")
+
 	cfg, err := LoadConfig("upmyip.toml")
 	if err != nil {
-		fmt.Println(err)
+		prn.Error("upmyip.toml", err)
 		return
 	}
 
 	ctx := context.Background()
 
-	s := NewSpinner()
-	fmt.Print("Finding public IP address... ")
+	s := NewSpinner(noColor)
+	prn.Print("Finding public IP address... ")
 	s.Start()
 	info, err := RequestPublicInfo(ctx)
 	if err != nil {
 		s.Stop()
-		fmt.Printf("%sError: %s%v%s\n", SGR(FgRed), SGR(FgYellow), err, SGR(FgReset))
+		prn.Error("Error", err)
 		return
 	}
 	s.Stop()
-	fmt.Printf("%s%s %s(%s)%s\n", SGR(FgWhite), info.IP, SGR(FgCyan), info.ISP, SGR(FgReset))
+	prn.BrightIPln(info)
 
 	credProvider := aws.NewCredentialsCache(
 		credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretKey, ""),
@@ -40,22 +48,22 @@ func main() {
 		config.WithRegion("us-east-1"),
 	)
 	if err != nil {
-		fmt.Printf("%sError loading AWS config: %s%v%s\n", SGR(FgRed), SGR(FgYellow), err, SGR(FgReset))
+		prn.Error("Error loading AWS config", err)
 		return
 	}
 
-	fmt.Print("Updating IP... ")
+	prn.Print("Updating IP... ")
 	s.Start()
 	err = InvokeLambda(ctx, awscfg, cfg.LambdaName, info.IP)
 	if err != nil {
 		s.Stop()
-		fmt.Printf("%sError invoking lambda: %s%v%s\n", SGR(FgRed), SGR(FgYellow), err, SGR(FgReset))
+		prn.Error("AWS Error", err)
 		return
 	}
 	s.Stop()
-	fmt.Printf("%sDone%s\n", SGR(FgWhite), SGR(FgReset))
+	prn.BrightPrintln("Done")
 
-	fmt.Printf("Success!\n\n")
+	prn.Print("Success!\n\n")
 }
 
 func InvokeLambda(ctx context.Context, awscfg aws.Config, lambdaName, ip string) error {
@@ -70,7 +78,7 @@ func InvokeLambda(ctx context.Context, awscfg aws.Config, lambdaName, ip string)
 		return err
 	}
 	if result.FunctionError != nil {
-		return fmt.Errorf("lambda function error: %s", *result.FunctionError)
+		return fmt.Errorf("remote function error: %s", *result.FunctionError)
 	}
 
 	return nil
