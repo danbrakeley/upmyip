@@ -1,0 +1,4 @@
+# Rename this file to 'upmyip.toml' and fill in the values below (then delete this comment)
+lambda = "LAMBDA_FUNCTION_NAME_TO_INVOKE"
+access_key = "AWS_ACCESS_KEY_FOR_INVOKING_USER"
+secret_key = "AWS_SECRET_KEY_FOR_INVOKING_USER"

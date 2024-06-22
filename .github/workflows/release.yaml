@@ -4,19 +4,28 @@ on:
   release:
     types: [created]
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
-  release:
+  releases-matrix:
     name: Release Go Binary
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
     steps:
       - uses: actions/checkout@v4
       - uses: wangyoucao577/go-release-action@v1.51
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          goos: windows
-          goarch: amd64
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
           goversion: "go.mod"
           project_path: "./cmd/upmyip"
+          extra_files: "extras/*"
           ldflags:
             '-X "github.com/danbrakeley/upmyip/internal/buildvar.Version=${{ github.event.release.tag_name }}"
             -X "github.com/danbrakeley/upmyip/internal/buildvar.BuildTime=${{ github.event.release.created_at
