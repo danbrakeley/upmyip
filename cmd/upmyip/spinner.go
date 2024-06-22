@@ -20,8 +20,8 @@ type Spinner struct {
 func NewSpinner(noColor bool) *Spinner {
 	return &Spinner{
 		frame:   0,
-		mspf:    120,
-		frames:  []rune{'.', 'o', 'O', '@', '*'},
+		mspf:    20,
+		frames:  []rune{'⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'},
 		noColor: noColor,
 	}
 }
@@ -53,7 +53,7 @@ func (s *Spinner) Run() {
 
 	green := ""
 	if !s.noColor {
-		green = ansi.SGR(ansi.FgGreen)
+		green = ansi.SGR(ansi.FgYellow)
 	}
 	reset := ""
 	if !s.noColor {
