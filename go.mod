@@ -1,6 +1,6 @@
 module github.com/danbrakeley/upmyip
 
-go 1.22.3
+go 1.22
 
 require (
 	github.com/BurntSushi/toml v1.4.0
@@ -10,8 +10,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.18
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.164.1
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.54.6
+	github.com/danbrakeley/ansi v0.1.0
 	github.com/danbrakeley/bsh v0.2.0
-	github.com/danbrakeley/frog v0.10.0
 	github.com/magefile/mage v1.15.0
 )
 
@@ -29,6 +29,4 @@ require (
 	github.com/aws/smithy-go v1.20.2 // indirect
 	github.com/danbrakeley/commandline v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/mattn/go-isatty v0.0.17 // indirect
-	golang.org/x/sys v0.5.0 // indirect
 )

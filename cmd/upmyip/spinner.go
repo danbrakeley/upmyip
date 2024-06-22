@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/danbrakeley/frog/ansi"
+	"github.com/danbrakeley/ansi"
 )
 
 type Spinner struct {
