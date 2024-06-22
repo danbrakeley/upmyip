@@ -45,7 +45,7 @@ Note that deploying code changes to all running lambdas can be automated via som
 
 ### Building the CLI
 
-- run `mage build`
+- run `mage upmyip`
   - output is `local/upmyip[.exe]`
 - it will require a `upmyip.toml` config file in the current folder, in the form:
   ```toml
@@ -53,6 +53,7 @@ Note that deploying code changes to all running lambdas can be automated via som
   access_key = "ACCESS_KEY"
   secret_key = "SECRET"
   ```
+- `mage upmyiprun` will run the most recently built `upmyip` inside the `local` folder (meaning your `upmyip.toml` file needs to be in the local folder as well)
 
 ## AWS Setup
 
