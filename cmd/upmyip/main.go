@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -41,7 +42,7 @@ func main() {
 		return
 	}
 
-	cfg, err := LoadConfig("upmyip.toml")
+	cfg, err := LoadConfig(filepath.Join(filepath.Dir(os.Args[0]), "upmyip.toml"))
 	if err != nil {
 		prn.Error("upmyip.toml", err)
 		return
