@@ -1,0 +1,24 @@
+name: build release zip
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    name: Release Go Binary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wangyoucao577/go-release-action@v1.51
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: windows
+          goarch: amd64
+          goversion: "go.mod"
+          project_path: "./cmd/upmyip"
+          ldflags:
+            '-X "github.com/danbrakeley/upmyip/internal/buildvar.Version=${{ github.event.release.tag_name }}"
+            -X "github.com/danbrakeley/upmyip/internal/buildvar.BuildTime=${{ github.event.release.created_at
+            }}" -X "github.com/danbrakeley/upmyip/internal/buildvar.ReleaseURL=${{
+            github.event.release.html_url }}"'

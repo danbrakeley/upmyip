@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -9,15 +10,36 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/danbrakeley/upmyip/internal/buildvar"
 )
 
 func main() {
+	var showVersionAndQuit bool
+	if len(os.Args) > 1 {
+		if os.Args[1] == "-v" || os.Args[1] == "--version" || os.Args[1] == "version" {
+			showVersionAndQuit = true
+		}
+	}
+
 	_, noColor := os.LookupEnv("NO_COLOR")
 	prn := Printer{
 		NoColor: noColor,
 	}
 
-	prn.Header("UpMyIP v0.1.2")
+	prn.Header("UpMyIP " + buildvar.Version)
+
+	if showVersionAndQuit {
+		prn.Print("Build Time: ")
+		prn.BrightPrintln(buildvar.BuildTime)
+		prn.Print("Release URL: ")
+		prn.BrightPrintln(buildvar.ReleaseURL)
+		return
+	}
+
+	if len(os.Args) > 1 {
+		prn.Error("unexpected argument", errors.New(os.Args[1]))
+		return
+	}
 
 	cfg, err := LoadConfig("upmyip.toml")
 	if err != nil {

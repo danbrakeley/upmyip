@@ -18,13 +18,27 @@ If you find something wrong/broken, please let me know and/or open a PR to help 
 
 - Install a recent version of [Go](https://go.dev/dl/)
 - Install [Mage](https://magefile.org/)
-- run `mage` to see the build targets
+  - There's a helper bash script for installing and upgrading Mage here: `./scripts/reinstall-mage.sh`.
+- run `mage` to see the build targets, e.g.
+  ```text
+  $ mage
+  Targets:
+    all            tests, builds, and packages all targets
+    ci             runs all CI tasks
+    lambda         tests, builds, and packages the lambda
+    lambdaBuild    builds the lamda (output goes to "local" folder)
+    lambdaZip      zips the lambda
+    test           tests all packages
+    upMyIP         tests and builds the upmyip cli app
+    upMyIPBuild    builds the upmyip cli app
+    upMyIPRun      runs the upmyip cli app in the "local" folder
+  ```
 
-Note that building and packaging happen in the `local` folder (which is ignored by git).
+Building and packaging happen in the `local` folder, which is ignored by git.
 
 ### Building the Lambda
 
-- run `mage buildlambda`
+- run `mage lambda`
   - output is `local/lambda.zip`
 
 Note that deploying code changes to all running lambdas can be automated via some bash script in [aws/README.md](aws/README.md).
